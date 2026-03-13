@@ -8,7 +8,9 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "start": "node dist/server.js",
     "deploy-mochahost": "ts-node scripts/deploy-mochahost.ts",
+    "broadcast-hls-channel": "ts-node scripts/broadcast-hls-channel.ts",
     "generate-hls": "ts-node scripts/generate-hls.ts",
+    "generate-hls-video": "ts-node scripts/generate-hls-video.ts",
     "check-audio-meta": "ts-node scripts/check-audio-meta.ts",
     "export-tracks": "ts-node scripts/check-audio-meta.ts --export"
   },

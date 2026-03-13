@@ -32,7 +32,7 @@ const filesToCopy = [
 const foldersToCopy = [
   'src',
   'dist',
-  // 'channels',  // HLS files already uploaded; uncomment to re-upload
+  'channels',  // HLS files already uploaded; uncomment to re-upload
   'public',
 ];
 

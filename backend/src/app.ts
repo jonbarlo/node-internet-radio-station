@@ -7,10 +7,19 @@ const app = express();
 
 app.use(express.json());
 
-// Static: player page and assets. Use __dirname so it works when cwd differs (e.g. IIS).
+// Static: player pages and assets. Use __dirname so it works when cwd differs (e.g. IIS).
 const publicDir = path.resolve(__dirname, '..', 'public');
+app.get('/audio-player', (_req: Request, res: Response): void => {
+  res.sendFile(path.join(publicDir, 'audio-player.html'));
+});
+app.get('/video-player', (_req: Request, res: Response): void => {
+  res.sendFile(path.join(publicDir, 'video-player.html'));
+});
 app.get('/player', (_req: Request, res: Response): void => {
-  res.sendFile(path.join(publicDir, 'player.html'));
+  res.redirect(302, '/audio-player');
+});
+app.get('/player-video', (_req: Request, res: Response): void => {
+  res.redirect(302, '/video-player');
 });
 app.use(express.static(publicDir));
 
@@ -22,7 +31,7 @@ app.get('/', (_req: Request, res: Response): void => {
   res.json({
     name: 'radio-station-api',
     version: '0.1.0',
-    endpoints: ['/health', '/streams', '/player'],
+    endpoints: ['/health', '/streams', '/audio-player', '/video-player'],
   });
 });
 

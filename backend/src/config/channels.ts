@@ -20,10 +20,12 @@ export type ChannelConfig = {
 
 const CHANNEL_1_PATH = process.env.CHANNEL_1_PATH ?? 'channels/channel-1';
 const CHANNEL_2_PATH = process.env.CHANNEL_2_PATH ?? 'channels/channel-2';
+const CHANNEL_3_PATH = process.env.CHANNEL_3_PATH ?? 'channels/channel-3';
 
 const rawChannels: ReadonlyArray<{ id: string; name: string; path: string }> = [
   { id: 'channel-1', name: 'Channel 1', path: CHANNEL_1_PATH },
   { id: 'channel-2', name: 'Channel 2', path: CHANNEL_2_PATH },
+  { id: 'channel-3', name: 'Channel 3 (Video)', path: CHANNEL_3_PATH },
 ];
 
 function resolveChannelDir(relativePath: string): string {

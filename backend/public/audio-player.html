@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radio – Audio player</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 1rem;
+      background: #0a0a0c;
+      color: #f5f5f7;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #f5f5f7;
+      margin: 0;
+    }
+    .channel-picker {
+      flex: 1;
+      max-width: 180px;
+    }
+    .channel-picker label {
+      display: block;
+      font-size: 0.6875rem;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .channel-picker select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: #f5f5f7;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+      padding-right: 1.75rem;
+    }
+
+    .player-card {
+      background: linear-gradient(165deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 1rem;
+    }
+    .art-wrap {
+      width: 100%;
+      aspect-ratio: 1;
+      max-width: 260px;
+      margin: 0 auto 1.25rem;
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.05);
+      box-shadow: 0 16px 32px rgba(0,0,0,0.35);
+    }
+    .art-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .art-wrap .placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 4rem;
+      font-weight: 200;
+    }
+    .now-playing {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .now-playing .title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 0.2rem;
+      color: #f5f5f7;
+    }
+    .now-playing .artist {
+      font-size: 0.9375rem;
+      color: rgba(255,255,255,0.65);
+    }
+    .now-playing .album {
+      font-size: 0.8125rem;
+      color: rgba(255,255,255,0.4);
+      margin-top: 0.15rem;
+    }
+
+    .progress-wrap {
+      margin-bottom: 0.5rem;
+    }
+    .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 2px;
+      overflow: hidden;
+      cursor: pointer;
+      margin-bottom: 0.35rem;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      width: 0%;
+      background: #0071e3;
+      border-radius: 2px;
+      transition: width 0.1s linear;
+    }
+    .time-wrap {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.6875rem;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.02em;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin: 0.75rem 0 0.5rem;
+    }
+    .controls-row button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.12);
+      color: #f5f5f7;
+      cursor: pointer;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .controls-row button:hover:not(:disabled) {
+      background: rgba(255,255,255,0.2);
+    }
+    .controls-row button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .controls-row button.play-pause {
+      width: 52px;
+      height: 52px;
+      font-size: 1.5rem;
+      background: #0071e3;
+    }
+    .controls-row button.play-pause:hover:not(:disabled) {
+      background: #0077ed;
+    }
+
+    audio {
+      width: 100%;
+      height: 36px;
+      margin-top: 0.25rem;
+    }
+    audio::-webkit-media-controls-panel { background: rgba(255,255,255,0.06); }
+
+    .status {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+    .status.error { color: #ff6b6b; }
+    .status.playing { color: #34d399; }
+
+    .track-list {
+      margin-top: 1rem;
+    }
+    .track-list h2 {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 0.5rem;
+    }
+    .track-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .track-list li {
+      padding: 0.5rem 0.6rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+    }
+    .track-list li:hover { background: rgba(255,255,255,0.05); }
+    .track-list li.current {
+      background: rgba(255,255,255,0.08);
+      color: #f5f5f7;
+    }
+    .track-list li .track-art {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: rgba(255,255,255,0.06);
+    }
+    .track-list li .track-info { flex: 1; min-width: 0; }
+    .track-list li .track-title { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-list li .track-meta { font-size: 0.75rem; color: rgba(255,255,255,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Audio</h1>
+    <div class="channel-picker">
+      <label for="channel">Station</label>
+      <select id="channel" aria-label="Pick station">
+        <option value="">Loading…</option>
+      </select>
+    </div>
+  </div>
+  <div class="player-card">
+    <div class="art-wrap">
+      <div id="art-placeholder" class="placeholder" aria-hidden="true">♪</div>
+      <img id="art-img" alt="" hidden>
+    </div>
+    <div class="now-playing">
+      <p id="np-title" class="title">—</p>
+      <p id="np-artist" class="artist"></p>
+      <p id="np-album" class="album"></p>
+    </div>
+    <div class="progress-wrap" id="progress-wrap" hidden>
+      <div class="progress-bar" id="progress-bar" role="slider" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" tabindex="0">
+        <div class="fill" id="progress-fill"></div>
+      </div>
+      <div class="time-wrap">
+        <span id="time-current">0:00</span>
+        <span id="time-total">0:00</span>
+      </div>
+    </div>
+    <div class="controls-row" id="controls-row" hidden>
+      <button type="button" id="btn-prev" aria-label="Previous">◀</button>
+      <button type="button" id="btn-play-pause" class="play-pause" aria-label="Play">▶</button>
+      <button type="button" id="btn-next" aria-label="Next">▶</button>
+    </div>
+    <audio id="audio" controls preload="none"></audio>
+    <p id="status" class="status" aria-live="polite">Select a station.</p>
+    <div class="track-list" id="track-list-wrap" hidden>
+      <h2>Track list</h2>
+      <ul id="track-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const channelSelect = document.getElementById('channel');
+      const audio = document.getElementById('audio');
+      const statusEl = document.getElementById('status');
+      const artPlaceholder = document.getElementById('art-placeholder');
+      const artImg = document.getElementById('art-img');
+      const npTitle = document.getElementById('np-title');
+      const npArtist = document.getElementById('np-artist');
+      const npAlbum = document.getElementById('np-album');
+      const trackListWrap = document.getElementById('track-list-wrap');
+      const trackList = document.getElementById('track-list');
+      const progressWrap = document.getElementById('progress-wrap');
+      const progressBar = document.getElementById('progress-bar');
+      const progressFill = document.getElementById('progress-fill');
+      const timeCurrent = document.getElementById('time-current');
+      const timeTotal = document.getElementById('time-total');
+      const controlsRow = document.getElementById('controls-row');
+      const btnPrev = document.getElementById('btn-prev');
+      const btnPlayPause = document.getElementById('btn-play-pause');
+      const btnNext = document.getElementById('btn-next');
+
+      let streamsList = [];
+      let currentChannelId = null;
+      let tracks = [];
+      let trackDurations = [];
+      let trackStarts = [];
+
+      function setStatus(text, className) {
+        statusEl.textContent = text;
+        statusEl.className = 'status ' + (className || '');
+      }
+
+      function setNowPlaying(track) {
+        if (!track) {
+          npTitle.textContent = '—';
+          npArtist.textContent = '';
+          npAlbum.textContent = '';
+          artPlaceholder.hidden = false;
+          artImg.hidden = true;
+          return;
+        }
+        npTitle.textContent = track.title || '—';
+        npArtist.textContent = track.artist || '';
+        npAlbum.textContent = track.album || '';
+        if (track.picture) {
+          artImg.src = track.picture;
+          artImg.alt = track.title ? 'Cover: ' + track.title : 'Cover';
+          artImg.hidden = false;
+          artPlaceholder.hidden = true;
+        } else {
+          artPlaceholder.hidden = false;
+          artImg.hidden = true;
+        }
+      }
+
+      function formatTime(s) {
+        if (!s || !isFinite(s)) return '0:00';
+        var m = Math.floor(s / 60);
+        var sec = Math.floor(s % 60);
+        return m + ':' + (sec < 10 ? '0' : '') + sec;
+      }
+
+      function updateProgress() {
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        if (!isFinite(dur) || dur <= 0) return;
+        var pct = (ct / dur) * 100;
+        progressFill.style.width = pct + '%';
+        progressBar.setAttribute('aria-valuenow', Math.round(pct));
+        timeCurrent.textContent = formatTime(ct);
+        timeTotal.textContent = formatTime(dur);
+      }
+
+      function getCurrentTrackIndex() {
+        if (!tracks.length || !trackStarts.length) return 0;
+        var time = audio.currentTime || 0;
+        for (var i = trackStarts.length - 1; i >= 0; i--) {
+          if (time >= trackStarts[i]) return i;
+        }
+        return 0;
+      }
+
+      function updateCurrentTrackIndex() {
+        if (!tracks.length || !trackStarts.length) return;
+        var idx = getCurrentTrackIndex();
+        setNowPlaying(tracks[idx]);
+        var items = trackList.querySelectorAll('li');
+        items.forEach(function (el, j) { el.classList.toggle('current', j === idx); });
+      }
+
+      function renderTrackList() {
+        trackList.innerHTML = '';
+        if (!tracks.length) {
+          trackListWrap.hidden = true;
+          trackStarts = [];
+          return;
+        }
+        trackListWrap.hidden = false;
+        trackDurations = tracks.map(function (t) { return t.duration || 0; });
+        var sum = 0;
+        trackStarts = trackDurations.map(function (d) { var s = sum; sum += d; return s; });
+        tracks.forEach(function (t, i) {
+          var li = document.createElement('li');
+          li.classList.toggle('current', i === 0);
+          li.dataset.index = String(i);
+          var art = document.createElement('img');
+          art.className = 'track-art';
+          if (t.picture) art.src = t.picture; else art.alt = '';
+          var info = document.createElement('div');
+          info.className = 'track-info';
+          var title = document.createElement('div');
+          title.className = 'track-title';
+          title.textContent = t.title || '—';
+          var meta = document.createElement('div');
+          meta.className = 'track-meta';
+          meta.textContent = [t.artist, t.album].filter(Boolean).join(' · ') || '—';
+          info.appendChild(title);
+          info.appendChild(meta);
+          li.appendChild(art);
+          li.appendChild(info);
+          trackList.appendChild(li);
+        });
+        setNowPlaying(tracks[0]);
+      }
+
+      function loadStreams() {
+        return fetch('/streams').then(function (r) {
+          if (!r.ok) throw new Error('Could not load streams');
+          return r.json();
+        });
+      }
+
+      function fillChannels(streams) {
+        streamsList = (streams.streams || []).filter(function (s) {
+          return s.id === 'channel-1' || s.id === 'channel-2';
+        });
+        channelSelect.innerHTML = '';
+        var option = document.createElement('option');
+        option.value = '';
+        option.textContent = '— Select station —';
+        channelSelect.appendChild(option);
+        streamsList.forEach(function (s) {
+          var opt = document.createElement('option');
+          opt.value = s.playlistUrl || '';
+          opt.dataset.id = s.id || '';
+          opt.textContent = s.name + (s.hasPlaylist ? '' : ' (no playlist)');
+          opt.disabled = !s.playlistUrl;
+          channelSelect.appendChild(opt);
+        });
+      }
+
+      function playHls(url) {
+        progressWrap.hidden = !url;
+        controlsRow.hidden = !url;
+        if (!url) {
+          currentChannelId = null;
+          tracks = [];
+          renderTrackList();
+          if (window.hlsInstance) {
+            window.hlsInstance.destroy();
+            window.hlsInstance = null;
+          }
+          audio.removeAttribute('src');
+          audio.load();
+          setStatus('Select a station.', '');
+          btnPlayPause.textContent = '▶';
+          btnPlayPause.setAttribute('aria-label', 'Play');
+          return;
+        }
+        var chosen = channelSelect.options[channelSelect.selectedIndex];
+        currentChannelId = chosen && chosen.dataset && chosen.dataset.id ? chosen.dataset.id : null;
+        tracks = [];
+        renderTrackList();
+
+        function tryLoadTracks() {
+          if (!currentChannelId) return;
+          fetch('/streams/' + currentChannelId + '/tracks.json')
+            .then(function (r) {
+              if (r.ok) return r.json();
+              return [];
+            })
+            .then(function (arr) {
+              tracks = Array.isArray(arr) ? arr : [];
+              renderTrackList();
+            })
+            .catch(function () {});
+        }
+        tryLoadTracks();
+
+        if (audio.canPlayType('application/vnd.apple.mpegurl') || audio.canPlayType('audio/mpegurl')) {
+          audio.src = url;
+          setStatus('Loading…', '');
+          audio.play().catch(function (e) {
+            setStatus('Play failed: ' + (e.message || 'unknown'), 'error');
+          });
+          audio.onplaying = function () { setStatus('Playing', 'playing'); btnPlayPause.textContent = '⏸'; btnPlayPause.setAttribute('aria-label', 'Pause'); };
+          audio.onpause = function () { btnPlayPause.textContent = '▶'; btnPlayPause.setAttribute('aria-label', 'Play'); };
+          audio.ontimeupdate = function () { updateProgress(); updateCurrentTrackIndex(); };
+          audio.onerror = function () { setStatus('Playback error.', 'error'); };
+          return;
+        }
+        if (window.Hls && window.Hls.isSupported()) {
+          if (window.hlsInstance) {
+            window.hlsInstance.destroy();
+            window.hlsInstance = null;
+          }
+          var hls = new window.Hls();
+          window.hlsInstance = hls;
+          hls.loadSource(url);
+          hls.attachMedia(audio);
+          setStatus('Loading…', '');
+          hls.on(window.Hls.Events.MANIFEST_PARSED, function () {
+            audio.play().catch(function (e) {
+              setStatus('Play failed: ' + (e.message || 'unknown'), 'error');
+            });
+          });
+          audio.onplaying = function () { setStatus('Playing', 'playing'); btnPlayPause.textContent = '⏸'; btnPlayPause.setAttribute('aria-label', 'Pause'); };
+          audio.onpause = function () { btnPlayPause.textContent = '▶'; btnPlayPause.setAttribute('aria-label', 'Play'); };
+          audio.ontimeupdate = function () { updateProgress(); updateCurrentTrackIndex(); };
+          hls.on(window.Hls.Events.ERROR, function (_, data) {
+            if (data.fatal) setStatus('Playback error.', 'error');
+          });
+          return;
+        }
+        setStatus('HLS not supported in this browser.', 'error');
+      }
+
+      function goPrev() {
+        if (!audio.src || !isFinite(audio.duration)) return;
+        var idx = getCurrentTrackIndex();
+        var target = idx > 0 ? trackStarts[idx - 1] : 0;
+        audio.currentTime = target;
+        updateProgress();
+        updateCurrentTrackIndex();
+      }
+
+      function goNext() {
+        if (!audio.src || !isFinite(audio.duration)) return;
+        var idx = getCurrentTrackIndex();
+        if (idx < tracks.length - 1 && trackStarts[idx + 1] !== undefined) {
+          audio.currentTime = trackStarts[idx + 1];
+        } else {
+          audio.currentTime = audio.duration;
+        }
+        updateProgress();
+        updateCurrentTrackIndex();
+      }
+
+      progressBar.addEventListener('click', function (e) {
+        if (!audio.duration || !isFinite(audio.duration)) return;
+        var rect = progressBar.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var pct = x / rect.width;
+        audio.currentTime = pct * audio.duration;
+      });
+
+      btnPrev.addEventListener('click', goPrev);
+      btnNext.addEventListener('click', goNext);
+      btnPlayPause.addEventListener('click', function () {
+        if (!audio.src) return;
+        if (audio.paused) {
+          audio.play().catch(function () {});
+        } else {
+          audio.pause();
+        }
+      });
+
+      trackList.addEventListener('click', function (e) {
+        var li = e.target.closest('li[data-index]');
+        if (!li || !audio.src) return;
+        var i = parseInt(li.dataset.index, 10);
+        if (trackStarts[i] !== undefined) {
+          audio.currentTime = trackStarts[i];
+          updateProgress();
+          updateCurrentTrackIndex();
+        }
+      });
+
+      channelSelect.addEventListener('change', function () {
+        playHls(channelSelect.value);
+      });
+
+      loadStreams()
+        .then(fillChannels)
+        .catch(function (err) {
+          channelSelect.innerHTML = '<option value="">Failed to load stations</option>';
+          setStatus('Could not load stations. Is the API running?', 'error');
+        });
+    })();
+  </script>
+</body>
+</html>

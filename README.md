@@ -37,6 +37,13 @@ npm run dev
 - **Deploy:** Build outputs to `dist/`; entry is `dist/server.js`. Use `backend/web.config` on Mochahost.
 - **FTP deploy:** From `backend/`, run `npm run deploy-mochahost`. Uses FTP credentials from `backend/.env.prod` (FTP_HOST, FTP_USER, FTP_PASSWORD, etc.). Builds locally, uploads `dist/`, `src/`, and config files; on the server run `npm install --production` and restart IIS.
 
+## Sample media
+
+Sample media used in this project (e.g. in `backend/samples/channel-*`) are free downloads from [Pixabay](https://pixabay.com/):
+
+- **Video samples:** [Pixabay – Sample video](https://pixabay.com/videos/search/sample%20video/)
+- **Audio samples:** [Pixabay – Sample music](https://pixabay.com/music/search/sample/)
+
 ## Conventions
 
 - **TypeScript:** See `.claude/TYPESCRIPT-STYLE-GUIDE.md` and [mkosir.github.io/typescript-style-guide](https://mkosir.github.io/typescript-style-guide/).

@@ -20,10 +20,12 @@ import path from 'path';
 const CWD = process.cwd();
 const CHANNEL_1_PATH = process.env.CHANNEL_1_PATH ?? 'channels/channel-1';
 const CHANNEL_2_PATH = process.env.CHANNEL_2_PATH ?? 'channels/channel-2';
+const CHANNEL_3_PATH = process.env.CHANNEL_3_PATH ?? 'channels/channel-3';
 
 const CHANNEL_PATHS: Record<string, string> = {
   'channel-1': path.resolve(CWD, CHANNEL_1_PATH),
   'channel-2': path.resolve(CWD, CHANNEL_2_PATH),
+  'channel-3': path.resolve(CWD, CHANNEL_3_PATH),
 };
 
 function main(): void {
@@ -33,13 +35,14 @@ function main(): void {
   if (!channelId || !inputPath) {
     console.error('Usage: npm run generate-hls -- channel-1 ./samples/channel-1');
     console.error('       npm run generate-hls -- channel-2 ./samples/channel-2');
-    console.error('Put your .mp3/.m4a files in backend/samples/channel-1/ and samples/channel-2/');
+    console.error('       npm run generate-hls -- channel-3 ./samples/channel-3');
+    console.error('Put your .mp3/.m4a (or video) files in backend/samples/channel-*');
     process.exit(1);
   }
 
   const outDir = CHANNEL_PATHS[channelId];
   if (!outDir) {
-    console.error('Channel must be channel-1 or channel-2');
+    console.error('Channel must be channel-1, channel-2, or channel-3');
     process.exit(1);
   }
 
