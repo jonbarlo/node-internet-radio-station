@@ -2,6 +2,11 @@
 
 Monorepo for a radio station backend (Node + TypeScript), web app, and Flutter mobile app. The backend hosts files and exposes HLS streams (one stream per folder of pre-segmented media).
 
+## Production
+
+- **Live site:** [https://radio.506software.com/](https://radio.506software.com/) — API info and endpoints.
+- **Player:** [https://radio.506software.com/player](https://radio.506software.com/player) — HLS channel player (select a channel to listen).
+
 ## Structure
 
 | Folder    | Purpose |
